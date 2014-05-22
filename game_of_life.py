@@ -52,7 +52,7 @@ class GameOfLife:
     def put(self, matrix, x, y):
         for mx in range(len(matrix)):
             for my in range(len(matrix[0])):
-                self.state[x+my][y+mx] = matrix[mx][my]
+                self.state[min(x+my,self.cols-1)][min(y+mx,self.rows-1)] = matrix[mx][my]
 
 
     def _ncount(self, x, y):
