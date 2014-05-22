@@ -5,6 +5,7 @@ import time
 import curses
 import locale
 import random
+import sys
 
 locale.setlocale(locale.LC_ALL, "")
 
@@ -46,8 +47,12 @@ class GameOfLife:
     def draw(self):
         f = self.can.frame(0,0,self.cols,self.rows)
         stdscr.addstr(0, 0, '{0}\n'.format(f))
-        stdscr.refresh()
         self.can.clear()
+
+    def put(self, matrix, x, y):
+        for mx in range(len(matrix)):
+            for my in range(len(matrix[0])):
+                self.state[x+my][y+mx] = matrix[mx][my]
 
 
     def _ncount(self, x, y):
@@ -90,7 +95,18 @@ class GameOfLife:
 
         return nburs
 
-def __main__(stdsrc):
+def __main__(stdsrc, argv=None):
+    if argv == None:
+        argv = sys.argv
+
+    # Initialize putmatrix
+    matrix = None
+    if len(argv) > 1:
+        # load specified file
+        f = open( argv[1], 'r' )
+        matrix = [ [ bool(int(val)) for val in  line.split(',')] for line in f ]
+    else:
+        matrix = [[True for i in range(20)] for j in range(20)]
 
     # Get terminal size
     term_x, term_y = getTerminalSize()
@@ -103,15 +119,41 @@ def __main__(stdsrc):
 
     g.draw()
 
+    c_x = 0
+    c_y = 0
+    stdscr.move(c_y,c_x)
+
     while True:
 
         g.tick()
+
+        # Draw to curses
         g.draw()
+        stdscr.move(c_y,c_x)
+
+        stdscr.refresh()
 
         # Catch user input
         inp = stdscr.getch()
         if inp != curses.ERR:
-            break
+            # Down
+            if inp == 258:
+                c_y = min(c_y + 1, term_y-1)
+            # Up
+            if inp == 259:
+                c_y = max(c_y - 1, 0)
+            # Left
+            if inp == 260:
+                c_x = max(c_x - 1, 0)
+            # Right
+            if inp == 261:
+                c_x = min(c_x + 1, term_x-1)
+            # Put
+            if inp == ord(" "):
+                g.put(matrix, c_x*2, c_y*4)
+            # Quit
+            if inp == 27:
+                break
 
 if __name__ == "__main__":
     curses.wrapper(__main__)
